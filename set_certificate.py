@@ -14,6 +14,15 @@ config = json.load(cfg_file)
 cert_conf_file = open(config_file('cert-urls.json'))
 cert_config = json.load(cert_conf_file)
 
+is_root = os.geteuid() == 0
+
+def get_file_in_cert_folder(domain, file):
+    relative_path = os.path.join('live', domain, file)
+    if is_root:
+        os.path.join('etc/letsencrypt/', relative_path)
+    else:
+        config_file(relative_path)
+
 async def set_certificate_for(page, url, cert_file, key_file, domain_name):
     # page = await browser.new_page()
     # Open SSL page
@@ -23,11 +32,6 @@ async def set_certificate_for(page, url, cert_file, key_file, domain_name):
     await asyncio.sleep(1)
 
     # Fill in form
-    # certfileUpload = await page.query_selector("input[name=certfile]")
-    # keyfileUpload = await page.query_selector("input[name=keyfile]")
-    
-    # await certfileUpload.uploadFile(cert_file)
-    # await keyfileUpload.uploadFile(key_file)
     print(f"Uploading cert files: {cert_file} and {key_file}")
 
     await page.set_input_files("input[name=certfile]", cert_file)
@@ -73,8 +77,8 @@ async def set_certificate():
             await asyncio.sleep(10)
 
         for (domain, url) in cert_config.items():
-            cert_file = config_file(os.path.join('live', domain, 'fullchain.pem'))
-            key_file = config_file(os.path.join('live', domain, 'privkey.pem'))
+            cert_file = get_file_in_cert_folder(domain, 'fullchain.pem')
+            key_file = get_file_in_cert_folder(domain, 'privkey.pem')
             await set_certificate_for(page, url, cert_file, key_file, domain)
 
         await asyncio.sleep(10)
