@@ -15,7 +15,6 @@ cert_conf_file = open(config_file('cert-urls.json'))
 cert_config = json.load(cert_conf_file)
 
 async def set_certificate_for(page, url, cert_file, key_file, domain_name):
-    # page = await browser.new_page()
     # Open SSL page
     print(f"Opening SSL-Form for {domain_name}: {url}")
     await page.goto(url, wait_until = 'networkidle')
@@ -23,11 +22,6 @@ async def set_certificate_for(page, url, cert_file, key_file, domain_name):
     await asyncio.sleep(1)
 
     # Fill in form
-    # certfileUpload = await page.query_selector("input[name=certfile]")
-    # keyfileUpload = await page.query_selector("input[name=keyfile]")
-    
-    # await certfileUpload.uploadFile(cert_file)
-    # await keyfileUpload.uploadFile(key_file)
     print(f"Uploading cert files: {cert_file} and {key_file}")
 
     await page.set_input_files("input[name=certfile]", cert_file)
