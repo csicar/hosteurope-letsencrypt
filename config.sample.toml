@@ -1,0 +1,29 @@
+email = "admin-mail@my-addr.test"
+kis-2fa = false
+kis-username = "mykisusername"
+kis-password = "mykispassword"
+preferred-challenge = "http"
+staging = false
+
+[[websites]]
+domains = ["mydomain.test", "www.mydomain.test"]
+cert-url = "https://kis.hosteurope.de/administration/webhosting/admin.php?menu=6&wp_id=XXXXXX&mode=sslupload&v_id=ZZZZZZZZZ"
+ftp = "my-basic-package"
+ftp-path = "mydomain.test"
+
+
+[[websites]]
+domains = ["myotherdomain.test", "www.myotherdomain.test"]
+cert-url = "https://kis.hosteurope.de/administration/webhosting/admin.php?menu=6&wp_id=XXXXXX&mode=sslupload&v_id=ZZZZZZZZZ"
+ftp = "my-other-package"
+ftp-path = "myotherdomain.test"
+
+[ftp.my-basic-package]
+login = "ftp1111111-basic"
+passwort = "myftppassword"
+server = "wp111111.server-he.de"
+
+[ftp.my-other-package]
+login = "ftp2222222-root"
+passwort = "myotherftppassword"
+server = "wp22222.server-he.de"

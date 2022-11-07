@@ -4,17 +4,10 @@ import json
 import os
 import asyncio
 from playwright.async_api import async_playwright
-from shared import domain_list, config_file
+from shared import config, letsencrypt_folder
 import sys
 
-
-cfg_file = open(config_file('einstellungen.json'))
-config = json.load(cfg_file)
-
-cert_conf_file = open(config_file('cert-urls.json'))
-cert_config = json.load(cert_conf_file)
-
-async def set_certificate_for(page, url, cert_file, key_file, domain_name):
+async def submit_form(page, url, cert_file, key_file, domain_name):
     # page = await browser.new_page()
     # Open SSL page
     print(f"Opening SSL-Form for {domain_name}: {url}")
@@ -23,11 +16,6 @@ async def set_certificate_for(page, url, cert_file, key_file, domain_name):
     await asyncio.sleep(1)
 
     # Fill in form
-    # certfileUpload = await page.query_selector("input[name=certfile]")
-    # keyfileUpload = await page.query_selector("input[name=keyfile]")
-    
-    # await certfileUpload.uploadFile(cert_file)
-    # await keyfileUpload.uploadFile(key_file)
     print(f"Uploading cert files: {cert_file} and {key_file}")
 
     await page.set_input_files("input[name=certfile]", cert_file)
@@ -46,39 +34,64 @@ async def set_certificate_for(page, url, cert_file, key_file, domain_name):
     await page.pdf(path=f"{domain_name}.log.pdf", print_background=True, format='A4')
     await page.screenshot(path = f"{domain_name}.log.jpeg")
     
+async def login(page, retry=4):
+    for i in range(0, retry):
+        print(f"Login Attempt {i+1}/{retry}")
+        try:
+            await login_inner(page)
+            return True
+        except Exception as e:
+            print(f"Login failed ({e}) -> Retry")
+    input("Automatic Login Failed. Please try it manually and press enter")
+    
+    return False
+
+async def login_inner(page):
+    await asyncio.sleep(3)
+    await page.goto('https://kis.hosteurope.de', wait_until = 'networkidle')
+    await page.focus("input[autocomplete=email]")
+    await page.keyboard.type(config["kis-username"])
+    await page.focus("input[type=password]")
+    await page.keyboard.type(config["kis-password"])
+    await page.keyboard.press("Enter")
+    await asyncio.sleep(1)
+    await page.wait_for_load_state('networkidle')
+    await asyncio.sleep(1)
+    #2FA
+    if (config["kis-2fa"]):
+        await page.focus("input[id=1]")
+        await page.keyboard.type(input("Enter the 2FA you got via SMS here: "))
+        await page.keyboard.press("Enter")
+        await asyncio.sleep(10)
+        await page.wait_for_load_state('networkidle')
+        await asyncio.sleep(10)
+
+    await page.wait_for_url("https://kis.hosteurope.de/**")
+
+    print("Login completed successfully")
 
 
-async def set_certificate():
-    # Login
+async def with_playwright(f):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False, slow_mo= 1, devtools= True)
         page = await browser.new_page()
-        await page.goto('https://kis.hosteurope.de', wait_until = 'networkidle')
-        await page.focus("input[autocomplete=email]")
-        await page.keyboard.type(config["kis-username"])
-        await page.focus("input[type=password]")
-        await page.keyboard.type(config["kis-password"])
-        await page.keyboard.press("Enter")
-        await asyncio.sleep(1)
-        await page.wait_for_load_state('networkidle')
-        await asyncio.sleep(1)
+        await f(browser, page)
 
-        #2FA
-        if (config["kis-2fa"]):
-            await page.focus("input[id=1]")
-            await page.keyboard.type(input("Enter the 2FA you got via SMS here: "))
-            await page.keyboard.press("Enter")
-            await asyncio.sleep(10)
-            await page.wait_for_load_state('networkidle')
-            await asyncio.sleep(10)
 
-        for (domain, url) in cert_config.items():
-            cert_file = config_file(os.path.join('live', domain, 'fullchain.pem'))
-            key_file = config_file(os.path.join('live', domain, 'privkey.pem'))
-            await set_certificate_for(page, url, cert_file, key_file, domain)
+async def set_certificate_for(page, website):
+    # Login
+    url = website['cert-url']
+    cert_path = None
+    for domain in website['domains']:
+        p = os.path.join(letsencrypt_folder, "live", domain)
+        if os.path.exists(p):
+            cert_path = p
+    cert_file = os.path.join(cert_path, 'fullchain.pem')
+    key_file = os.path.join(cert_path, 'privkey.pem')
+    
+    await submit_form(page, url, cert_file, key_file, domain)
 
-        await asyncio.sleep(10)
-        await browser.close()
+    await asyncio.sleep(10)
 
 if __name__ == '__main__':
     loop = asyncio.new_event_loop()

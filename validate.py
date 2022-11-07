@@ -5,39 +5,41 @@ import logging
 import os
 import uuid
 
-from shared import config_file
-
-# manuelles Logging, da certbot Ausgabe dieses Skripts unterdrückt
-logging.basicConfig(filename='validation.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
-
-# Mapping zwischen Domains und Verzeichnis auf FTP laden
-with open(config_file('domains.json')) as domain_file:
-    DOMAINS = json.load(domain_file)
+from shared import config
 
 # zu validierende Domain, Dateinamen and Token Inhalt werden von certbot per Umgebungsvariable übergeben
 domain = os.environ['CERTBOT_DOMAIN']
 filename = os.environ['CERTBOT_TOKEN']
 content = os.environ['CERTBOT_VALIDATION']
 
-logging.debug('Domain: ' + domain)
+logging.info(f"Validating Domain {domain}")
 logging.debug('Inhalt: ' + content)
 logging.debug('Dateiname: ' + filename)
 
-path = DOMAINS.get(domain)
-if not path:
+domain_settings = None
+ftp_cfg = None
+
+for website in config['websites']:
+    if domain in website['domains']:
+        domain_settings = website
+        print(domain_settings)
+        print(config['ftp'])
+        ftp_cfg = config['ftp'][website['ftp']]
+
+if domain_settings is None:
     logging.debug('Kein Mapping für Domain gefunden. Breche ab!')
     exit(1)
 
-# FTP Zugangsdaten laden
-with open(config_file('ftp.json')) as ftp_file:
-    ftp_cfg = json.load(ftp_file)
+if ftp_cfg is None:
+    logging.debug('Kein Mapping für FTP gefunden. Breche ab!')
+    exit(1)
 
 # mit FTP verbinden
 ftp = ftplib.FTP_TLS(ftp_cfg['server'], ftp_cfg['login'], ftp_cfg['passwort'])
 root_dir = ftp.pwd()
 
 # zum Pfad navigieren, in dem Challenge angelegt werden muss
-ftp.cwd(root_dir + path)
+ftp.cwd(root_dir + domain_settings['ftp-path'])
 try:
     ftp.cwd('.well-known/acme-challenge')
 except:

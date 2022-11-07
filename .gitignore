@@ -2,6 +2,7 @@ einstellungen.json
 ftp.json
 domains.json
 cert-urls.json
+config.toml
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template

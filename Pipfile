@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 pyppeteer = "*"
 playwright = "*"
+tomli = "*"
+argparse = "*"
 
 [dev-packages]
 

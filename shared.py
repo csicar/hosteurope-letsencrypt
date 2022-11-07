@@ -1,16 +1,14 @@
 # coding=utf-8
-import json
+import tomli
 import os
 
 
-def config_file(name):
-    f = os.path.expanduser('~/.config/hosteurope-letsencrypt/' + name)
-    return os.path.abspath(name if os.path.isfile(name) or not os.path.isfile(f) else f)
 
+config_file = os.path.expanduser('~/.config/hosteurope-letsencrypt/config.toml')
+if os.path.isfile("config.toml") or not os.path.isfile(config_file):
+  config_file = os.path.abspath('config.toml')
 
-# Domain Mapping einlesen
-with open(config_file('domains.json')) as domain_file:
-    domain_map = json.load(domain_file)
+letsencrypt_folder = os.path.expanduser('~/.config/hosteurope-letsencrypt/')
 
-# Domains auflisten wie von certbot erwartet
-domain_list = ' -d ' + ' -d '.join(domain_map.keys())
+with open(config_file, 'rb') as f:
+    config = tomli.load(f)
