@@ -6,6 +6,7 @@ import asyncio
 from playwright.async_api import async_playwright
 from shared import config, letsencrypt_folder
 import sys
+import re
 
 async def submit_form(page, url, cert_file, key_file, domain_name):
     # page = await browser.new_page()
@@ -78,18 +79,27 @@ async def with_playwright(f):
         await f(browser, page)
 
 
+def get_cert_path_for(domains):
+    existing_certificate_folders = os.listdir(os.path.join(letsencrypt_folder, "live"))
+    matching_path = None
+    for folder in existing_certificate_folders:
+        if folder in domains:
+            matching_path =  folder
+        else: 
+            match = re.search(r"^(.+)-(\d+)$", folder)
+            if match is not None:
+                domain = match.group(1)
+                if domain in domains:
+                    matching_path = folder
+    return os.path.join(letsencrypt_folder, "live", matching_path)
+
 async def set_certificate_for(page, website):
-    # Login
     url = website['cert-url']
-    cert_path = None
-    for domain in website['domains']:
-        p = os.path.join(letsencrypt_folder, "live", domain)
-        if os.path.exists(p):
-            cert_path = p
+    cert_path = get_cert_path_for(website['domains'])
     cert_file = os.path.join(cert_path, 'fullchain.pem')
     key_file = os.path.join(cert_path, 'privkey.pem')
     
-    await submit_form(page, url, cert_file, key_file, domain)
+    await submit_form(page, url, cert_file, key_file, website['domains'][0])
 
     await asyncio.sleep(10)
 
