@@ -101,7 +101,7 @@ async def set_certificate_for(page, website):
     
     await submit_form(page, url, cert_file, key_file, website['domains'][0])
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(2)
 
 if __name__ == '__main__':
     loop = asyncio.new_event_loop()

@@ -34,8 +34,12 @@ if ftp_cfg is None:
     logging.debug('Kein Mapping für FTP gefunden. Breche ab!')
     exit(1)
 
+logging.debug(f"Connecting to FTP TLS {ftp_cfg['server']} {ftp_cfg['login']} {ftp_cfg['passwort']}")
 # mit FTP verbinden
-ftp = ftplib.FTP_TLS(ftp_cfg['server'], ftp_cfg['login'], ftp_cfg['passwort'])
+ftp = ftplib.FTP_TLS(ftp_cfg['server'])
+ftp.login(ftp_cfg['login'], ftp_cfg['passwort'])
+ftp.prot_p()
+
 root_dir = ftp.pwd()
 
 # zum Pfad navigieren, in dem Challenge angelegt werden muss

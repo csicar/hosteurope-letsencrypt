@@ -54,7 +54,7 @@ async def renew_single(page, website):
   print(cmd)
   if not args.yes and input('Für diese Domains ein neues Zertifikat erstellen? (y/n): ') != 'y':
       print('Abbruch, es wurde kein Zertifikat erstellt.')
-      exit(0)
+      return
 
   # neues Zertifikat erstellen
   os.system(cmd)
@@ -63,7 +63,7 @@ async def renew_single(page, website):
   print('Verification Done')
   if not args.yes and input('Upload the certificates to kis.hosteurope.de (y/n):') != 'y':
       print('Abort: No certificates uploaded')
-      exit(0)
+      return
   await set_certificate.set_certificate_for(page, website)
 
 async def renew_all(page, only_filter):
