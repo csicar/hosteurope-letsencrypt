@@ -25,11 +25,7 @@
               ps.tomli
               ps.playwright
             ]))
-            # pkgs.python3
             pkgs.certbot
-            pkgs.python3Packages.pip
-            # pkgs.python3Packages.playwright
-            # pkgs.python3Packages.tomli
             pkgs.playwright-test
           ];
 

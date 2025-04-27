@@ -34,7 +34,7 @@ async def renew_single(page, website):
   domain_list = "".join([f" -d {domain}" for domain in website["domains"]])
   print(domain_list)
   # certbot Kommando zusammenbauen
-  cmd = 'certbot certonly --manual --agree-tos --manual-public-ip-logging-ok'
+  cmd = 'certbot certonly --manual --agree-tos '
   cmd += ' -m ' + email
   cmd += ' --preferred-challenge=' + challenge
   if 'http' == challenge:
